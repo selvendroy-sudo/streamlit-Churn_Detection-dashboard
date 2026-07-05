@@ -18,7 +18,7 @@ st.set_page_config(
 
 @st.cache_data
 def load_data():
-    data = pd.read_csv('WA_Fn-UseC_-Telco-Customer-Churn.csv')
+    data = pd.read_csv('data/WA_Fn-UseC_-Telco-Customer-Churn.csv')
 
     data['TotalCharges_numeric'] = pd.to_numeric(
         data['TotalCharges'],
@@ -140,36 +140,40 @@ if search_customer:
             case=False,
             na=False
         )
-    ]
+    ].copy()
 
 if show_only_churn:
     filtered_df = filtered_df[
         filtered_df['Churn'] == 'Yes'
-    ]
+    ].copy()
 
+if len(filtered_df) > 0:
     filtered_df['Predicted_Churn_Probability'] = model.predict_proba(
-    filtered_df[feature_cols]
-)[:, 1]
+        filtered_df[feature_cols]
+    )[:, 1]
 
-filtered_df['Risk_Level'] = pd.cut(
-    filtered_df['Predicted_Churn_Probability'],
-    bins=[0, 0.4, 0.7, 1],
-    labels=['Low', 'Medium', 'High']
-)
+    filtered_df['Risk_Level'] = pd.cut(
+        filtered_df['Predicted_Churn_Probability'],
+        bins=[0, 0.4, 0.7, 1],
+        labels=['Low', 'Medium', 'High']
+    )
 
-top_risk = filtered_df.sort_values(
-    'Predicted_Churn_Probability',
-    ascending=False
-)[[
-    'customerID',
-    'Contract',
-    'InternetService',
-    'tenure',
-    'MonthlyCharges',
-    'Churn',
-    'Predicted_Churn_Probability',
-    'Risk_Level'
-]].head(10)
+    top_risk = filtered_df.sort_values(
+        'Predicted_Churn_Probability',
+        ascending=False
+    )[[
+        'customerID',
+        'Contract',
+        'InternetService',
+        'tenure',
+        'MonthlyCharges',
+        'Churn',
+        'Predicted_Churn_Probability',
+        'Risk_Level'
+    ]].head(10)
 
-st.subheader('Predictive Output: Top Customers at Risk of Churn')
-st.dataframe(top_risk, use_container_width=True)
+    st.subheader('Predictive Output: Top Customers at Risk of Churn')
+    st.dataframe(top_risk, use_container_width=True)
+
+else:
+    st.warning('No customers match the selected filters.')
